@@ -727,21 +727,12 @@ print("MSE : ", statistics.mean((-1*cross_val_score(gbc, X_valid_mod, y_valid_f,
 # model, which has close results with the gradient boosting algorithm
 
 # the most stable ones are the gradient boosting model evolving with 
-# the number of estimators
-# there are also the two models which are near to have constant results with
-# cross-validation, which are the K-nearest neighbors model with the weights 
-# distance and the random forest model
+# the number of estimators and there are also the two models which are near 
+# to have constant results with cross-validation, which are the K-nearest 
+# neighbors model with the weights distance and the random forest model
 
-# the models of decision trees and k-nearest neighbors are the two faster 
+# the models of decision trees and k-nearest neighbors are the two fastest
 # models to train 
-
-
-
-
-
-
-
-
 
 
 
