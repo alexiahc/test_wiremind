@@ -730,7 +730,7 @@ print("MSE : ", statistics.mean((-1*cross_val_score(gbc, X_valid_mod, y_valid_f,
 
 # the model with the maximum r2 and the minimum MSE is the random forest 
 # model, which has close results with the gradient boosting algorithm
-# the radom forest algorithm is the most accurate to use 
+# the random forest algorithm is the most accurate to use 
 
 # the most stable ones are the gradient boosting model evolving with 
 # the number of estimators and there are also the two models which are near 
