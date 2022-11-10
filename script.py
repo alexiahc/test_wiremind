@@ -3,7 +3,7 @@
 """
 Created on Mon Oct 31 16:31:01 2022
 
-@author: alexi
+@author: Alexia Huc-Lhuillery
 """
 
 import pandas as pd
@@ -163,7 +163,7 @@ for categ in cols_categ:
 # the distribution of the variables, and show the repartition of the values
 # outside the quarters
 
-# for pos country, the values with the highest median have the largest repartition 
+# for POS country, the values with the highest median have the largest repartition 
 # values are mostly under 10 and their repartition are around little values 
 
 # for product code, median are under 20 for each, SJD has the largest box
@@ -177,6 +177,9 @@ print("agent code count : " , ACcount.describe())
 plt.figure()
 plt.plot(ACcount)
 
+plt.figure()
+plt.plot(ACcount[ACcount < 250])
+
 # two agent code with more shipments, one with 600, one with 250
 
 ACcount = train['Price_pw'].groupby(train.AgentCode).mean()
@@ -184,8 +187,9 @@ print("agent code mean of prices : " , ACcount.describe())
 plt.figure()
 plt.plot(ACcount)
 
-plt.figure()
-plt.plot(ACcount[ACcount < 150])
+# mean of 12 for the agent code, with large standard deviation
+# mean under 3.7 for 75% of agent
+# close to the statistic about y_train (next cell)
 
 #%% figures target 
 
@@ -235,6 +239,7 @@ OH_cols_train.index = X_train.index
 OH_cols_valid.index = X_valid.index
 
 obj_cols = [col for col in X_train.columns if X_train[col].dtype == "object"]
+
 # take only numerical values to concatenate 
 num_X_train = X_train.drop(obj_cols, axis=1)
 num_X_valid = X_valid.drop(obj_cols, axis=1)
@@ -264,6 +269,7 @@ nv_X_train = pd.concat([enc_cols_train, OH_X_train], axis=1)
 nv_X_valid = pd.concat([enc_cols_valid, OH_X_valid], axis=1)
 
 scaler = StandardScaler()
+
 # standardize the data 
 nv_X_train = pd.DataFrame(scaler.fit_transform(nv_X_train), columns = nv_X_train.columns) 
 nv_X_valid = pd.DataFrame(scaler.transform(nv_X_valid), columns = nv_X_valid.columns)
@@ -289,7 +295,7 @@ intervs = intervs[ind]
 # function find_interv
 # input : x, float 
 # outuput : interval, Interval
-# return the interval corresponding to the value x 
+# return the interval of "intervs" corresponding to the value x 
 def find_interv(x):
     find = False 
     i=0
@@ -309,8 +315,8 @@ y_valid_f = y_valid_q.apply(lambda x : x.mid).astype(float)
 # well describe for lower prices, but the quartiles are larger for higher
 # prices so the midpoint will not really correspond to the expected price
 
-# we take midpoint to have a float but we can return to the intervals after 
-# with apply(find_interv) on train and valid set 
+# we take midpoint to have a float but we can come back to the intervals after 
+# with apply(find_interv) on train and valid dataset 
 
 #%% correlation matrix
 
@@ -325,7 +331,7 @@ f, ax = plt.subplots(figsize = (14,12))
 sns.heatmap(np.corrcoef(train[cols].values.T), vmax=.8, linewidths=0.01,square=True,annot=True,cmap='viridis',
             linecolor="white",xticklabels = cols.values ,annot_kws = {'size':12},yticklabels = cols.values)
 
-print("correlation with prices : ", correlation.Price_pw.sort_values(ascending = False))
+print("\ncorrelation with prices : ", correlation.Price_pw.sort_values(ascending = False))
 
 sns.set()
 sns.pairplot(train[cols], height = 2 ,kind ='scatter',diag_kind='kde')
@@ -336,7 +342,7 @@ plt.show()
 # DocumentRatingSource_XXXX and CargoType_YYY correlate (0.97)
 # correlation is high, can keep just one of each 
 
-#%% 
+#%% pearson's correlation with the target value 
 
 cols = nv_X_train.columns
 print("Pearson’s correlation coef, p-value non-correlation\n")
@@ -364,18 +370,17 @@ sns.barplot(x=list(range(1,len(var_explained)+1)),
             y=var_explained, color="limegreen")
 plt.xlabel('SVs', fontsize=16)
 plt.ylabel('Percent Variance Explained', fontsize=16)
-plt.savefig('svd_scree_plot.png',dpi=100)
 
 # the fisrt singular values do not contain a lot of information compared
 # to the others singular values, we can not reduce the matrice with them 
 
 #%% selection of the variables 
 
-# variable with high correlation with another variable 
+# drop variable with high correlation with another variable 
 X_train_mod = nv_X_train.drop('AgentCode', axis=1).drop('POS',axis=1).drop('DocumentRatingSource_XXXX',axis=1)
 X_valid_mod = nv_X_valid.drop('AgentCode', axis=1).drop('POS',axis=1).drop('DocumentRatingSource_XXXX',axis=1)
 
-# variable with discutable correlation 
+# drop variable with discutable correlation 
 X_train_mod = X_train_mod.drop('DocumentRatingSource_AACC', axis=1).drop('FlownMonth_SEPTEMBER', axis=1).drop('CargoType_XXX', axis=1)
 X_valid_mod = X_valid_mod.drop('DocumentRatingSource_AACC', axis=1).drop('FlownMonth_SEPTEMBER', axis=1).drop('CargoType_XXX', axis=1)
 
@@ -387,17 +392,18 @@ X_valid_mod = X_valid_mod.drop('DocumentRatingSource_AACC', axis=1).drop('FlownM
 
 ###############################################################################
 
-# the dataset isn't very large so we can use cross-validation on the models
+# the dataset is not very large so we can use cross-validation on the models
 # to compute the r2 score and the mean square error on the validation set 
 # for each model 
 
-# we add to the plot also the scores without cross-validation to compare,
+# we add to the plot also the scores without cross-validation to compare
+
 # val_ is when validation set is used, train_ is for the train set 
 
 # we print in the shell the most accurate score we can have for each model 
 
 # here we use regressor model because we want to find the value of the midpoint
-# for the previous intervals 
+# from the previous intervals 
 
 #%% ramdom forest 
 
@@ -553,7 +559,6 @@ plt.plot(n_neighbors, list(map(statistics.mean, tl_mse2_unif)),
 plt.legend()
 
 # distance 
-
 plt.figure()
 plt.title("Effect of n_neighbors KNeighborsRegressor (distance)")
 plt.xlabel("n_neighbors")
@@ -725,14 +730,23 @@ print("MSE : ", statistics.mean((-1*cross_val_score(gbc, X_valid_mod, y_valid_f,
 
 # the model with the maximum r2 and the minimum MSE is the random forest 
 # model, which has close results with the gradient boosting algorithm
+# the radom forest algorithm is the most accurate to use 
 
 # the most stable ones are the gradient boosting model evolving with 
 # the number of estimators and there are also the two models which are near 
 # to have constant results with cross-validation, which are the K-nearest 
 # neighbors model with the weights distance and the random forest model
 
-# the models of decision trees and k-nearest neighbors are the two fastest
+# the models of decision trees and k-nearest neighbors are the two fastest 
 # models to train 
+
+
+
+
+
+
+
+
 
 
 
